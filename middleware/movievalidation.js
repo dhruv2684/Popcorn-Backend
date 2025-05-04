@@ -1,4 +1,4 @@
-const { body, validationResult } = require("express-validator");
+const { body, validationResult, check } = require("express-validator");
 
 const allowedCategories = [
   "Action", "Adventure", "Comedy", "Drama", "Horror", "Thriller",
@@ -32,21 +32,51 @@ const movieValidationRule = () => {
         return true;
       }),
 
-    body("downloadLinks").optional().isObject().withMessage("downloadLinks must be an object"),
+    body("downloadLinks")
+      .optional()
+      .custom((value) => {
+        // Ensure value is a string before parsing
+        if (typeof value === "string") {
+          try {
+            value = JSON.parse(value); // Parse stringified JSON
+          } catch (err) {
+            throw new Error("Invalid JSON format for downloadLinks");
+          }
+        }
 
-    body("moviePosterImage")
-      .exists().withMessage("moviePosterImage is required")
-      .isURL().withMessage("moviePosterImage must be a valid URL"),
+        // Now check if it's a valid object
+        if (value && typeof value === "object") {
+          Object.values(value).forEach(url => {
+            if (typeof url !== 'string' || !/^https?:\/\/.+/i.test(url)) {
+              throw new Error("Each download link must be a valid URL");
+            }
+          });
+        }
+        return true;
+      })
+      .withMessage("downloadLinks must be a valid object"),
 
-    body("movieScreenshotImages").optional().isArray().withMessage("movieScreenshotImages must be an array"),
 
-    body("tags").optional()
+    check("moviePosterImage").custom((_, { req }) => {
+      if (!req.files || !req.files.moviePosterImage || !req.files.moviePosterImage.length) {
+        throw new Error("moviePosterImage is required");
+      }
+      return true;
+    }),
+
+    check("movieScreenshotImages").optional().custom((_, { req }) => {
+      if (req.body.movieScreenshotImages && !req.files.movieScreenshotImages) {
+        throw new Error("movieScreenshotImages must be files");
+      }
+      return true;
+    }),
+
+    body("tags")
+      .optional()
       .isArray().withMessage("tags must be an array")
       .custom((value) => {
-        const invalid = value.filter((tag) => !allowedCategories.includes(tag));
-        if (invalid.length) {
-          throw new Error(`Invalid tag values: ${invalid.join(", ")}`);
-        }
+        // Optional validation: tags don't need to be part of allowedCategories
+        // But you can add additional checks here if necessary
         return true;
       })
   ];
@@ -54,11 +84,14 @@ const movieValidationRule = () => {
 
 const movieValidation = (req, res, next) => {
   const errors = validationResult(req);
-  if (errors.isEmpty()) return next();
-
-  const extractedErrors = errors.array().map(err => err.msg);
-  return res.status(422).json({ message: extractedErrors[0] });
+  if (!errors.isEmpty()) {
+    console.log("Validation errors:", errors.array()); // Log all errors
+    const firstError = errors.array()[0].msg; // Get the first error message
+    return res.status(422).json({ message: firstError }); // Return only the first error
+  }
+  next(); // If validation is successful, continue to the next middleware
 };
+
 
 module.exports = {
   movieValidationRule,

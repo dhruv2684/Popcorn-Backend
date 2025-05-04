@@ -11,13 +11,14 @@ const upload = require("../middleware/multer");
 
 
 router.post("/add",
-    movieValidationRule,
-    movieValidation,
-    adminAuthenticate,
+
     upload.fields([
         { name: "moviePosterImage", maxCount: 1 },
         { name: "movieScreenshotImages", maxCount: 5 }
     ]),
+    adminAuthenticate,
+    movieValidationRule(),  
+    movieValidation,
     MovieController.createMovie
 );
 
