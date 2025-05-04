@@ -26,9 +26,9 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
-// app.get('/', (req, res) => {
-//   res.json({ message: "Welcome to our site!" });
-// });
+app.get('/', (req, res) => {
+  res.json({ message: "Welcome to our site!" });
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
