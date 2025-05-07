@@ -22,15 +22,7 @@ const movieValidationRule = () => {
       .notEmpty().withMessage("language cannot be empty"),
 
     body("category")
-      .exists().withMessage("category is required")
-      .isArray({ min: 0 }).withMessage("category must be a non-empty array")
-      .custom((value) => {
-        const invalid = value.filter((cat) => !allowedCategories.includes(cat));
-        if (invalid.length) {
-          throw new Error(`Invalid category values: ${invalid.join(", ")}`);
-        }
-        return true;
-      }),
+      .exists().withMessage("category is required"),
 
     body("downloadLinks")
       .optional()
@@ -72,13 +64,7 @@ const movieValidationRule = () => {
     }),
 
     body("tags")
-      .optional()
-      .isArray().withMessage("tags must be an array")
-      .custom((value) => {
-        // Optional validation: tags don't need to be part of allowedCategories
-        // But you can add additional checks here if necessary
-        return true;
-      })
+    .exists().withMessage("tags is required")
   ];
 };
 
