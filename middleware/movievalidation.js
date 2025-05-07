@@ -23,7 +23,7 @@ const movieValidationRule = () => {
 
     body("category")
       .exists().withMessage("category is required")
-      .isArray({ min: 1 }).withMessage("category must be a non-empty array")
+      .isArray({ min: 0 }).withMessage("category must be a non-empty array")
       .custom((value) => {
         const invalid = value.filter((cat) => !allowedCategories.includes(cat));
         if (invalid.length) {

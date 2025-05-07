@@ -49,13 +49,33 @@ class MovieController {
                 )
             );
 
+            // Parse category and tags to ensure array format
+            const parsedCategories =
+                Array.isArray(category) ? category :
+                    typeof category === "string" && category.trim() !== "" ? [category.trim()] :
+                        [];
 
-            const parsedCategories = typeof category === "string" ? [category] : category;
-            const parsedTags = typeof tags === "string" ? [tags] : tags;
+            const parsedTags =
+                Array.isArray(tags) ? tags :
+                    typeof tags === "string" && tags.trim() !== "" ? [tags.trim()] :
+                        [];
+
+            // Optional: enforce at least one category
+            if (parsedCategories.length === 0) {
+                return res.status(400).json({ message: "At least one category is required" });
+            }
 
             let parsedDownloadLinks = {};
             try {
-                parsedDownloadLinks = downloadLinks ? JSON.parse(downloadLinks) : {};
+                parsedDownloadLinks = downloadLinks
+                    ? JSON.parse(downloadLinks)
+                    : {};
+
+                parsedDownloadLinks = {
+                    "480p": parsedDownloadLinks["480p"] || "",
+                    "720p": parsedDownloadLinks["720p"] || "",
+                    "1080p": parsedDownloadLinks["1080p"] || ""
+                };
             } catch (err) {
                 return res.status(400).json({ message: "Invalid downloadLinks format" });
             }
@@ -80,6 +100,61 @@ class MovieController {
             return res.status(500).json({ message: error.message });
         }
     };
+
+    getMovieById = async (req, res) => {
+        try {
+            const movieId = req.params.id;
+            const movie = await Movie.findById(movieId);
+
+            if (!movie) {
+                return res.status(404).json({ message: "Movie not found" });
+            }
+
+            res.status(200).json({ movie });
+        } catch (error) {
+            console.error("Error fetching movie by ID:", error);
+            res.status(500).json({ message: "Server error while fetching movie" });
+        }
+    };
+
+
+    getAllMovies = async (req, res) => {
+        try {
+            const searchQuery = req.query.search || "";
+
+            const movies = await Movie.find({
+                movieName: { $regex: searchQuery, $options: "i" }
+            }).sort({ releaseDate: -1 }); // Sort by release date descending
+
+            res.status(200).json({ movies });
+        } catch (error) {
+            console.error("Error fetching movies:", error);
+            res.status(500).json({ message: "Server error while fetching movies" });
+        }
+    };
+
+
+    deleteMovie = async (req, res) => {
+        try {
+            const { id } = req.params;
+    
+            const deletedMovie = await Movie.findByIdAndDelete(id);
+    
+            if (!deletedMovie) {
+                return res.status(404).json({ message: "Movie not found" });
+            }
+    
+            res.status(200).json({ message: "Movie deleted successfully" });
+        } catch (error) {
+            console.error("Error deleting movie:", error);
+            res.status(500).json({ message: "Server error while deleting movie" });
+        }
+    };
+    
+
+
+
+
 
 
 

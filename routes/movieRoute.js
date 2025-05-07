@@ -21,6 +21,11 @@ router.post("/add",
     movieValidation,
     MovieController.createMovie
 );
+router.get("/", MovieController.getAllMovies);
+router.get("/:id", MovieController.getMovieById);
+router.delete("/delete/:id", adminAuthenticate, MovieController.deleteMovie);
+
+
 
 
 module.exports = router
