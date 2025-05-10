@@ -38,8 +38,6 @@ app.get('/', (req, res) => {
 app.use('/api/admin', adminRouter);
 app.use('/api/movie', movieRoute);
 
-
-
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port http://localhost:${process.env.PORT}`);
 });
